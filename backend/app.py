@@ -4,11 +4,27 @@ import datetime
 import urllib.request
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, request, jsonify, send_from_directory
+from functools import wraps
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+app.secret_key = os.environ.get('SECRET_KEY', 'mconnect-dev-secret-change-me')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+MCONNECT_USERNAME = os.environ.get('MCONNECT_USERNAME', 'admin')
+MCONNECT_PASSWORD = os.environ.get('MCONNECT_PASSWORD', 'admin123')
+
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get('user'):
+            return jsonify({'error': 'Login required'}), 401
+        return f(*args, **kwargs)
+    return wrapper
 
 BUNDLED_JOKES = [
     "Why do programmers prefer dark mode? Because light attracts bugs.",
@@ -138,7 +154,30 @@ def health():
     return jsonify({'status': 'ok'})
 
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    if username == MCONNECT_USERNAME and password == MCONNECT_PASSWORD:
+        session['user'] = username
+        return jsonify({'message': f'Welcome, {username}!', 'user': username})
+    return jsonify({'error': 'Invalid username or password'}), 401
+
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'message': 'Logged out'})
+
+
+@app.route('/api/me')
+def me():
+    return jsonify({'logged_in': bool(session.get('user')), 'user': session.get('user')})
+
+
 @app.route('/api/joke')
+@login_required
 def joke():
     return jsonify({
         'joke': get_daily_joke(),
@@ -147,6 +186,7 @@ def joke():
 
 
 @app.route('/api/listings', methods=['GET'])
+@login_required
 def get_listings():
     conn = get_db()
     cur = conn.cursor()
@@ -188,6 +228,7 @@ def get_listings():
 
 
 @app.route('/api/listings', methods=['POST'])
+@login_required
 def create_listing():
     data = request.get_json()
     category = data.get('category')
@@ -230,6 +271,7 @@ def create_listing():
 
 
 @app.route('/api/listings/top', methods=['GET'])
+@login_required
 def get_top_listings():
     conn = get_db()
     cur = conn.cursor()
@@ -250,6 +292,7 @@ def get_top_listings():
 
 
 @app.route('/api/listings/<int:id>/rate', methods=['POST'])
+@login_required
 def rate_listing(id):
     data = request.get_json() or {}
     try:
@@ -283,6 +326,7 @@ def rate_listing(id):
 
 
 @app.route('/api/listings/<int:id>', methods=['GET'])
+@login_required
 def get_listing(id):
     conn = get_db()
     cur = conn.cursor()
@@ -302,6 +346,7 @@ def get_listing(id):
 
 
 @app.route('/api/listings/<int:id>', methods=['PUT'])
+@login_required
 def update_listing(id):
     data = request.get_json() or {}
     name = data.get('name')
@@ -342,6 +387,7 @@ def update_listing(id):
 
 
 @app.route('/api/listings/<int:id>', methods=['DELETE'])
+@login_required
 def delete_listing(id):
     conn = get_db()
     cur = conn.cursor()
@@ -358,6 +404,7 @@ def delete_listing(id):
 
 
 @app.route('/api/categories', methods=['GET'])
+@login_required
 def get_categories():
     conn = get_db()
     cur = conn.cursor()
@@ -377,6 +424,7 @@ def get_categories():
 
 
 @app.route('/api/categories', methods=['POST'])
+@login_required
 def create_category():
     data = request.get_json()
     name = (data.get('name') or '').strip().lower().replace(' ', '_')
@@ -410,6 +458,7 @@ def create_category():
 
 
 @app.route('/api/categories/<string:name>', methods=['DELETE'])
+@login_required
 def delete_category(name):
     conn = get_db()
     cur = conn.cursor()

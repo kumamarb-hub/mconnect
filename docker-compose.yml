@@ -21,6 +21,9 @@ services:
       - "4000:4000"
     environment:
       DATABASE_URL: postgres://mconnect:mconnect_secret@db:5432/mconnect
+      MCONNECT_USERNAME: ${MCONNECT_USERNAME:-admin}
+      MCONNECT_PASSWORD: ${MCONNECT_PASSWORD:-admin123}
+      SECRET_KEY: ${SECRET_KEY:-mconnect-dev-secret-change-me}
     depends_on:
       db:
         condition: service_healthy
