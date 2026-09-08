@@ -8,7 +8,7 @@ set -euo pipefail
 # Optional: APP_DIR=/path ./deploy.sh   (install location, default ~/mconnect)
 
 APP_DIR="${APP_DIR:-$HOME/mconnect}"
-REPO_URL="${REPO_URL:-git@github.com:kumamarb-hub/mconnect.git}"
+REPO_URL="${REPO_URL:-https://github.com/kumamarb-hub/mconnect.git}"
 
 echo "==> MConnect deploy"
 echo "    App dir : $APP_DIR"
