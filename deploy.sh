@@ -17,7 +17,11 @@ echo "    Repo    : $REPO_URL"
 # --- 1. Ensure Docker ---
 if ! command -v docker >/dev/null 2>&1; then
   echo "==> Docker not found — installing..."
-  curl -fsSL https://get.docker.com | sh
+  if ! curl -fsSL https://get.docker.com | sh; then
+    echo "==> get.docker.com failed (likely a repo GPG issue) — trying distro package instead..."
+    sudo apt-get update -qq || true
+    sudo apt-get install -y -qq docker.io docker-compose-plugin
+  fi
   sudo usermod -aG docker "$USER"
   echo ""
   echo "Your user was added to the 'docker' group."
@@ -27,7 +31,9 @@ fi
 
 if ! docker compose version >/dev/null 2>&1; then
   echo "==> Docker Compose plugin missing — installing..."
-  sudo apt-get update -qq
+  # Ignore per-repo errors (e.g. an unsigned external repo) so one bad repo
+  # can't abort the deploy; the packages we need will still resolve.
+  sudo apt-get update -qq || true
   sudo apt-get install -y -qq docker-compose-plugin
 fi
 
