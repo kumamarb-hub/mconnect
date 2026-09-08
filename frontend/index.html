@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MConnect</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, #ffffff 0%, #d6e6ff 55%, #eef4ff 100%);
+    background-attachment: fixed;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  .bg-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16vw;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: rgba(102, 126, 234, 0.09);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    z-index: -1;
+  }
+
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+
+  header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+
+  .logo {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .logo .spin {
+    display: inline-block;
+    font-size: 3.4rem;
+    margin-right: 0.4rem;
+    animation: slowSpin 6s linear infinite;
+  }
+
+  @keyframes slowSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .logo .accent { color: #ffd966; }
+
+  .search-container {
+    max-width: 700px;
+    margin: -1.5rem auto 0;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 10;
+  }
+
+  .search-box {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+
+  .search-box input {
+    flex: 1;
+    border: none;
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  .search-box button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .search-box button:hover { background: #5a6fd6; }
+
+  .search-box .clear-btn {
+    background: none;
+    color: #999;
+    border: none;
+    padding: 1rem 1rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .search-box .clear-btn:hover { color: #dc3545; }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.5rem auto 0.5rem;
+    max-width: 700px;
+    padding: 0 1rem;
+  }
+
+  .tab {
+    padding: 0.5rem 1.2rem;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .tab:hover {
+    border-color: #667eea;
+    color: #667eea;
+    animation: tabBlink 0.6s step-start infinite;
+  }
+
+  @keyframes tabBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .tab.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .tab .tab-del {
+    display: inline-block;
+    margin-left: 0.4rem;
+    color: #dc3545;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .tab .tab-del:hover { color: #a71d2a; }
+
+  .tabs-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0.5rem auto 1rem;
+    max-width: 700px;
+    padding: 0 1rem;
+  }
+
+  .new-cat-btn {
+    padding: 0.4rem 1rem;
+    border: 2px dashed #28a745;
+    border-radius: 20px;
+    background: white;
+    color: #28a745;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .new-cat-btn:hover { background: #28a745; color: white; }
+
+  .container {
+    max-width: 900px;
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+
+  .top-table {
+    max-width: 900px;
+    margin: 1.2rem auto;
+    padding: 0 1rem;
+  }
+
+  .top-table h2 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 0.6rem;
+  }
+
+  .top-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .top-table th, .top-table td {
+    padding: 0.65rem 0.9rem;
+    text-align: left;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f0f2f5;
+  }
+
+  .top-table th {
+    background: #667eea;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .top-table tr:last-child td { border-bottom: none; }
+
+  .top-table tr:hover td { background: #f8f9ff; }
+
+  .top-table .rank {
+    font-weight: 700;
+    color: #667eea;
+  }
+
+  .top-table tbody tr.clickable {
+    cursor: pointer;
+  }
+
+  .top-table tbody tr.clickable:hover td { background: #f8f9ff; }
+
+  .top-table .chevron {
+    display: inline-block;
+    color: #667eea;
+    font-size: 0.7rem;
+    margin-right: 0.4rem;
+    transition: transform 0.2s;
+  }
+
+  .top-table tr.open .chevron { transform: rotate(90deg); }
+
+  .top-table tr.top-detail td {
+    background: #f4f7ff;
+    font-size: 0.85rem;
+    color: #555;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #e6ebf5;
+  }
+
+  .top-table tr.top-detail .detail-field {
+    display: inline-block;
+    margin-right: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .top-table tr.top-detail strong { color: #444; }
+
+  .top-table .empty {
+    text-align: center;
+    padding: 1.5rem;
+    color: #999;
+  }
+
+  .add-btn {
+    display: block;
+    margin: 0 auto 1.5rem;
+    padding: 0.7rem 2rem;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .add-btn:hover { background: #218838; }
+
+  .listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  .card-category {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    background: #e9ecef;
+    color: #495057;
+  }
+
+  .cat-hotel { background: #fff3cd; color: #856404; }
+  .cat-car { background: #cce5ff; color: #004085; }
+  .cat-taxi { background: #d4edda; color: #155724; }
+
+  .card h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+
+  .card .location {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+  }
+
+  .card .description {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+  }
+
+  .card .fields {
+    font-size: 0.8rem;
+    color: #888;
+    border-top: 1px solid #eee;
+    padding-top: 0.5rem;
+  }
+
+  .card .fields span {
+    display: inline-block;
+    margin-right: 0.8rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .card .delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .card .delete-btn:hover { background: #c82333; }
+
+  .card-actions {
+    float: right;
+    display: flex;
+    gap: 0.3rem;
+  }
+
+  .card .edit-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .card .edit-btn:hover { background: #5a6fd6; }
+
+  .cards-rating {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stars { cursor: pointer; user-select: none; white-space: nowrap; }
+
+  .stars .star {
+    font-size: 1.15rem;
+    color: #ddd;
+    transition: color 0.15s;
+  }
+
+  .stars .star.active { color: #ffc107; }
+
+  .stars .star:hover { color: #ffc107; }
+
+  .rating-num {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+    font-size: 1.1rem;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal h2 { margin-bottom: 1rem; }
+
+  .modal label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    margin-top: 0.8rem;
+  }
+
+  .modal input, .modal textarea, .modal select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .modal textarea { resize: vertical; min-height: 60px; }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+    justify-content: flex-end;
+  }
+
+  .modal-actions button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .btn-cancel { background: #eee; color: #333; }
+  .btn-save { background: #667eea; color: white; }
+  .btn-save:hover { background: #5a6fd6; }
+  .btn-danger { background: #dc3545; color: white; }
+  .btn-danger:hover { background: #c82333; }
+
+  #confirmText {
+    font-size: 0.95rem;
+    color: #555;
+    margin-top: 0.5rem;
+  }
+
+  #dynamic-fields { margin-top: 0.5rem; }
+  #dynamic-fields label { margin-top: 0.5rem; }
+
+  /* Category field builder */
+  .field-row {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.7rem;
+    background: #fafbfc;
+  }
+
+  .field-row .row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .field-row .row-head strong { font-size: 0.85rem; }
+
+  .remove-field {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .field-row .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem;
+  }
+
+  .field-row label { margin-top: 0.4rem; font-size: 0.8rem; }
+
+  .hint {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.3rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-watermark">MConnect</div>
+
+<header>
+  <h1 class="logo"><span class="spin">🔄</span>M<span class="accent">Connect</span></h1>
+</header>
+
+<div class="search-container">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search by name, category, description, or location...">
+    <button class="clear-btn" onclick="clearSearch()" title="Clear category filter">Clear</button>
+    <button type="button" onclick="doSearch()">Search</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="tabs-actions">
+  <button class="new-cat-btn" onclick="openCategoryModal()">+ Add Category</button>
+</div>
+
+<div class="top-table">
+  <h2>Top 5 Listings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Rating</th>
+        <th>Location</th>
+        <th>Added</th>
+      </tr>
+    </thead>
+    <tbody id="topTableBody">
+      <tr><td colspan="7" class="empty">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="container">
+  <button class="add-btn" type="button" onclick="openModal()">+ Add Listing</button>
+  <div class="listings-grid" id="listings"></div>
+</div>
+
+<!-- Add Listing modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Add New Listing</h2>
+    <form id="listingForm" onsubmit="submitForm(event)">
+      <label for="category">Category *</label>
+      <select id="category" required onchange="updateDynamicFields()">
+        <option value="">Select...</option>
+      </select>
+
+      <label for="name">Name *</label>
+      <input type="text" id="name" required>
+
+      <label for="description">Description</label>
+      <textarea id="description"></textarea>
+
+      <label for="price">Price</label>
+      <input type="number" id="price" step="0.01" min="0">
+
+      <label for="location">Location</label>
+      <input type="text" id="location">
+
+      <label for="image_url">Image URL</label>
+      <input type="url" id="image_url">
+
+      <div id="dynamic-fields"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Category modal -->
+<div class="modal-overlay" id="categoryModalOverlay" onclick="closeCategoryModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Add New Category</h2>
+    <form id="categoryForm" onsubmit="submitCategory(event)">
+      <label for="catName">Category Name *</label>
+      <input type="text" id="catName" placeholder="e.g. Restaurant" required>
+      <p class="hint">Will be stored as e.g. "restaurant". Spaces become underscores.</p>
+
+      <label>Custom Fields</label>
+      <div id="categoryFields"></div>
+
+      <button type="button" class="btn-save" onclick="addFieldRow()">+ Add Field</button>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeCategoryModal()">Cancel</button>
+        <button type="submit" class="btn-save">Create Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmation modal -->
+<div class="modal-overlay" id="confirmOverlay" onclick="closeConfirm(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Are you sure?</h2>
+    <p id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="confirmNo" onclick="closeConfirm()">Cancel</button>
+      <button type="button" class="btn-danger" id="confirmYes" onclick="confirmYes()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/listings';
+const CATEGORIES_API = '/api/categories';
+let categories = [];
+let topListings = [];
+let allListings = [];
+let editingId = null;
+let currentCategory = '';
+let currentSearch = '';
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSearch();
+  });
+  loadCategories();
+  loadTopListings();
+});
+
+async function loadTopListings() {
+  try {
+    const res = await fetch('/api/listings/top?limit=5');
+    const listings = await res.json();
+    renderTopListings(listings);
+  } catch (err) {
+    document.getElementById('topTableBody').innerHTML = '<tr><td colspan="7" class="empty">Could not load</td></tr>';
+  }
+}
+
+function renderTopListings(listings) {
+  topListings = listings;
+  const tbody = document.getElementById('topTableBody');
+
+  if (!listings || listings.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No listings yet. Add one!</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = listings.map((l, i) => {
+    const added = l.created_at ? new Date(l.created_at).toLocaleDateString() : '';
+    const price = l.price ? `$${parseFloat(l.price).toFixed(2)}` : '—';
+    const rating = (parseFloat(l.rating) || 0).toFixed(1);
+    const ratingCount = parseInt(l.rating_count) || 0;
+    return `
+      <tr class="clickable" data-idx="${i}" onclick="toggleTopDetail(this)">
+        <td class="rank"><span class="chevron">▶</span>${i + 1}</td>
+        <td>${escHtml(l.name)}</td>
+        <td>${escHtml(humanize(l.category))}</td>
+        <td>${price}</td>
+        <td>${rating} <span class="rating-num">(${ratingCount})</span></td>
+        <td>${l.location ? escHtml(l.location) : '—'}</td>
+        <td>${added}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleTopDetail(row) {
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains('top-detail')) {
+    next.remove();
+    row.classList.remove('open');
+    return;
+  }
+
+  document.querySelectorAll('tr.top-detail').forEach(r => r.remove());
+  document.querySelectorAll('tr.open').forEach(r => r.classList.remove('open'));
+
+  const l = topListings[parseInt(row.dataset.idx)];
+  if (!l) return;
+
+  let html = '';
+  if (l.description) html += `<span class="detail-field"><strong>Description:</strong> ${escHtml(l.description)}</span>`;
+
+  const fields = l.fields || {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== null && value !== '' && value !== undefined) {
+      const label = key.replace(/_/g, ' ');
+      const display = Array.isArray(value) ? value.join(', ') : value;
+      html += `<span class="detail-field"><strong>${escHtml(label)}:</strong> ${escHtml(String(display))}</span>`;
+    }
+  }
+
+  const detailRow = document.createElement('tr');
+  detailRow.className = 'top-detail';
+  detailRow.innerHTML = `<td colspan="7">${html || '<em>No additional details.</em>'}</td>`;
+  row.classList.add('open');
+  row.after(detailRow);
+}
+
+function humanize(name) {
+  return (name || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function slugify(name) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+async function loadCategories() {
+  try {
+    const res = await fetch(CATEGORIES_API);
+    categories = await res.json();
+    renderTabs();
+    populateCategorySelect();
+    loadListings();
+  } catch (err) {
+    console.error('Failed to load categories:', err);
+  }
+}
+
+function renderTabs() {
+  const container = document.getElementById('tabs');
+  let html = `<button class="tab ${currentCategory === '' ? 'active' : ''}" data-category="">All</button>`;
+  categories.forEach(c => {
+    html += `<button class="tab ${currentCategory === c.name ? 'active' : ''}" data-category="${escAttr(c.name)}">${escHtml(humanize(c.name))}<span class="tab-del" title="Delete category" onclick="event.stopPropagation(); deleteCategory('${escAttr(c.name)}')">&times;</span></button>`;
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCategory = tab.dataset.category;
+      loadListings();
+    });
+  });
+}
+
+function populateCategorySelect() {
+  const select = document.getElementById('category');
+  let html = '<option value="">Select...</option>';
+  categories.forEach(c => {
+    html += `<option value="${escAttr(c.name)}">${escHtml(humanize(c.name))}</option>`;
+  });
+  select.innerHTML = html;
+}
+
+async function loadListings() {
+  const params = new URLSearchParams();
+  if (currentCategory) params.set('category', currentCategory);
+  if (currentSearch) params.set('search', currentSearch);
+
+  try {
+    const res = await fetch(`${API}?${params}`);
+    const listings = await res.json();
+    allListings = listings;
+    renderListings(listings);
+  } catch (err) {
+    console.error('Failed to load listings:', err);
+    document.getElementById('listings').innerHTML = '<div class="empty">Failed to load listings</div>';
+  }
+}
+
+function renderListings(listings) {
+  const container = document.getElementById('listings');
+
+  if (listings.length === 0) {
+    container.innerHTML = '<div class="empty">No listings found. Add one!</div>';
+    return;
+  }
+
+  container.innerHTML = listings.map(l => {
+    const fields = l.fields || {};
+    let fieldsHtml = '';
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== null && value !== '' && value !== undefined) {
+        const label = key.replace(/_/g, ' ');
+        const display = Array.isArray(value) ? value.join(', ') : value;
+        fieldsHtml += `<span><strong>${escHtml(label)}:</strong> ${escHtml(String(display))}</span>`;
+      }
+    }
+
+    const rating = parseFloat(l.rating) || 0;
+    const ratingCount = parseInt(l.rating_count) || 0;
+    let starsHtml = '';
+    for (let s = 1; s <= 5; s++) {
+      starsHtml += `<span class="star ${s <= Math.round(rating) ? 'active' : ''}" onclick="event.stopPropagation(); rateListing(${l.id}, ${s})">★</span>`;
+    }
+
+    return `
+      <div class="card">
+        <div class="card-actions">
+          <button class="edit-btn" onclick="event.stopPropagation(); editListing(${l.id})">Edit</button>
+          <button class="delete-btn" onclick="deleteListing(${l.id})">Delete</button>
+        </div>
+        <span class="card-category cat-${escAttr(l.category)}">${escHtml(humanize(l.category))}</span>
+        <h3>${escHtml(l.name)}</h3>
+        ${l.location ? `<div class="location">${escHtml(l.location)}</div>` : ''}
+        ${l.price ? `<div class="price">$${parseFloat(l.price).toFixed(2)}</div>` : ''}
+        <div class="cards-rating"><span class="stars">${starsHtml}</span><span class="rating-num">${rating.toFixed(1)} (${ratingCount})</span></div>
+        ${l.description ? `<div class="description">${escHtml(l.description)}</div>` : ''}
+        ${fieldsHtml ? `<div class="fields">${fieldsHtml}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function doSearch() {
+  currentSearch = document.getElementById('searchInput').value.trim();
+  loadListings();
+}
+
+function clearSearch() {
+  currentCategory = '';
+  currentSearch = '';
+  const input = document.getElementById('searchInput');
+  if (input) input.value = '';
+  document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
+  const allTab = document.querySelector('#tabs .tab[data-category=""]');
+  if (allTab) allTab.classList.add('active');
+  loadListings();
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escAttr(str) {
+  return escHtml(str).replace(/"/g, '&quot;');
+}
+
+/* ---- Add / Edit Listing ---- */
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('listingForm').reset();
+  document.getElementById('dynamic-fields').innerHTML = '';
+  document.querySelector('#modalOverlay h2').textContent = 'Add New Listing';
+  editingId = null;
+}
+
+function editListing(id) {
+  const l = allListings.find(item => item.id === id);
+  if (!l) return;
+
+  document.getElementById('modalOverlay').classList.add('active');
+  document.querySelector('#modalOverlay h2').textContent = 'Edit Listing';
+  editingId = id;
+
+  document.getElementById('listingForm').reset();
+  document.getElementById('category').value = l.category;
+  updateDynamicFields();
+
+  document.getElementById('name').value = l.name || '';
+  document.getElementById('description').value = l.description || '';
+  document.getElementById('price').value = l.price !== null && l.price !== undefined ? l.price : '';
+  document.getElementById('location').value = l.location || '';
+  document.getElementById('image_url').value = l.image_url || '';
+
+  const fields = l.fields || {};
+  document.querySelectorAll('#dynamic-fields [data-field]').forEach(el => {
+    if (fields[el.dataset.field] !== undefined && fields[el.dataset.field] !== null) {
+      el.value = fields[el.dataset.field];
+    }
+  });
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+}
+
+function updateDynamicFields() {
+  const categoryName = document.getElementById('category').value;
+  const container = document.getElementById('dynamic-fields');
+  const category = categories.find(c => c.name === categoryName);
+
+  if (!category || !category.fields || category.fields.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = category.fields.map(f => {
+    const fName = escAttr(f.name);
+    const fLabel = escHtml(f.label || humanize(f.name));
+    const fType = f.type || 'text';
+
+    if (fType === 'select') {
+      const options = (f.options || []).map(opt =>
+        `<option value="${escAttr(opt)}">${escHtml(opt)}</option>`
+      ).join('');
+      return `
+        <label for="field_${fName}">${fLabel}</label>
+        <select id="field_${fName}" data-field="${fName}" data-type="select">${options}</select>
+      `;
+    }
+
+    const inputType = { 'number': 'number', 'tel': 'tel' }[fType] || 'text';
+    const textarea = fType === 'textarea';
+    const control = textarea
+      ? `<textarea id="field_${fName}" data-field="${fName}" data-type="text"></textarea>`
+      : `<input type="${inputType}" id="field_${fName}" data-field="${fName}" data-type="${inputType}">`;
+
+    return `
+      <label for="field_${fName}">${fLabel}</label>
+      ${control}
+    `;
+  }).join('');
+}
+
+function buildFields() {
+  const fields = {};
+  document.querySelectorAll('#dynamic-fields [data-field]').forEach(el => {
+    if (el.value === '') return;
+    if (el.dataset.type === 'number') {
+      fields[el.dataset.field] = parseFloat(el.value);
+    } else {
+      fields[el.dataset.field] = el.value;
+    }
+  });
+  return fields;
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+
+  const data = {
+    category: document.getElementById('category').value,
+    name: document.getElementById('name').value,
+    description: document.getElementById('description').value || null,
+    price: document.getElementById('price').value ? parseFloat(document.getElementById('price').value) : null,
+    location: document.getElementById('location').value || null,
+    image_url: document.getElementById('image_url').value || null,
+    fields: buildFields()
+  };
+
+  try {
+    const url = editingId ? `${API}/${editingId}` : API;
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      closeModal();
+      editingId = null;
+      loadListings();
+      loadTopListings();
+    } else {
+      const err = await res.json();
+      alert('Error: ' + (err.error || 'Failed to save'));
+    }
+  } catch (err) {
+    alert('Network error');
+  }
+}
+
+/* ---- Add Category ---- */
+function openCategoryModal() {
+  document.getElementById('categoryModalOverlay').classList.add('active');
+  document.getElementById('categoryForm').reset();
+  document.getElementById('categoryFields').innerHTML = '';
+  addFieldRow();
+  addFieldRow();
+}
+
+function closeCategoryModal(e) {
+  if (!e || e.target === document.getElementById('categoryModalOverlay')) {
+    document.getElementById('categoryModalOverlay').classList.remove('active');
+  }
+}
+
+function addFieldRow() {
+  const container = document.getElementById('categoryFields');
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  row.innerHTML = `
+    <div class="row-head">
+      <strong>Field</strong>
+      <button type="button" class="remove-field" onclick="removeFieldRow(this)">Remove</button>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label>Field Name</label>
+        <input type="text" class="f-name" placeholder="e.g. cuisine">
+      </div>
+      <div>
+        <label>Display Label</label>
+        <input type="text" class="f-label" placeholder="e.g. Cuisine">
+      </div>
+    </div>
+    <label>Type</label>
+    <select class="f-type">
+      <option value="text">Text</option>
+      <option value="number">Number</option>
+      <option value="tel">Phone</option>
+      <option value="textarea">Textarea</option>
+      <option value="select">Dropdown</option>
+    </select>
+    <label>Dropdown Options (comma-separated)</label>
+    <input type="text" class="f-options" placeholder="e.g. Italian, Chinese, Mexican">
+  `;
+  container.appendChild(row);
+}
+
+function removeFieldRow(btn) {
+  const row = btn.closest('.field-row');
+  if (row) row.remove();
+}
+
+async function submitCategory(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('catName').value;
+  if (!name.trim()) {
+    alert('Category name is required');
+    return;
+  }
+
+  const fields = [];
+  document.querySelectorAll('#categoryFields .field-row').forEach(row => {
+    const fName = slugify(row.querySelector('.f-name').value || '');
+    const fLabel = row.querySelector('.f-label').value.trim();
+    const fType = row.querySelector('.f-type').value;
+    const optionsInput = row.querySelector('.f-options');
+
+    if (!fName || fType === 'select' && !(optionsInput.value.trim())) {
+      if (fName) {
+        alert('Field "' + fName + '" needs options for a dropdown');
+      }
+      return;
+    }
+
+    const field = { name: fName, label: fLabel || fName, type: fType };
+    if (fType === 'select') {
+      field.options = optionsInput.value.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    fields.push(field);
+  });
+
+  try {
+    const res = await fetch(CATEGORIES_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, fields })
+    });
+
+    if (res.ok) {
+      closeCategoryModal();
+      await loadCategories();
+    } else {
+      const err = await res.json();
+      alert('Error: ' + (err.error || 'Failed to create category'));
+    }
+  } catch (err) {
+    alert('Network error');
+  }
+}
+
+function deleteCategory(name) {
+  const display = humanize(name);
+  showConfirm(`Are you sure you want to delete category "${display}" and all its listings?`, async () => {
+    try {
+      const res = await fetch(`${CATEGORIES_API}/${encodeURIComponent(name)}`, { method: 'DELETE' });
+
+      if (res.ok) {
+        if (currentCategory === name) clearSearch();
+        await loadCategories();
+        loadTopListings();
+      } else {
+        const err = await res.json();
+        alert('Error: ' + (err.error || 'Failed to delete'));
+      }
+    } catch (err) {
+      alert('Network error');
+    }
+  });
+}
+
+async function rateListing(id, value) {
+  try {
+    const res = await fetch(`${API}/${id}/rate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value })
+    });
+    if (res.ok) {
+      loadListings();
+      loadTopListings();
+    }
+  } catch (err) {
+    // ignore rating failures
+  }
+}
+
+function deleteListing(id) {
+  showConfirm('Are you sure you want to delete this listing?', async () => {
+    try {
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
+      loadListings();
+      loadTopListings();
+    } catch (err) {
+      alert('Failed to delete');
+    }
+  });
+}
+
+let confirmCallback = null;
+
+function showConfirm(message, onYes) {
+  document.getElementById('confirmText').textContent = message;
+  confirmCallback = onYes;
+  document.getElementById('confirmOverlay').classList.add('active');
+}
+
+function closeConfirm(e) {
+  if (!e || e.target === document.getElementById('confirmOverlay')) {
+    document.getElementById('confirmOverlay').classList.remove('active');
+    confirmCallback = null;
+  }
+}
+
+function confirmYes() {
+  const cb = confirmCallback;
+  closeConfirm();
+  if (cb) cb();
+}
+</script>
+
+</body>
+</html>
