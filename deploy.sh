@@ -34,7 +34,20 @@ if ! docker compose version >/dev/null 2>&1; then
   # Ignore per-repo errors (e.g. an unsigned external repo) so one bad repo
   # can't abort the deploy; the packages we need will still resolve.
   sudo apt-get update -qq || true
-  sudo apt-get install -y -qq docker-compose-plugin
+  if ! sudo apt-get install -y -qq docker-compose-plugin; then
+    # Compose plugin isn't in distro repos — install the standalone binary.
+    ARCH=$(uname -m)
+    case "$ARCH" in
+      aarch64|arm64) COMPOSE_ARCH="aarch64" ;;
+      *)             COMPOSE_ARCH="x86_64"  ;;
+    esac
+    echo "==> Downloading docker compose binary ($COMPOSE_ARCH)..."
+    sudo mkdir -p /usr/local/lib/docker/cli-plugins
+    sudo curl -fsSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$COMPOSE_ARCH" \
+      -o /usr/local/lib/docker/cli-plugins/docker-compose
+    sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+  fi
+  docker compose version >/dev/null 2>&1 || { echo "[ERROR] docker compose still not available."; exit 1; }
 fi
 
 # --- 2. Get (or update) the app code ---
