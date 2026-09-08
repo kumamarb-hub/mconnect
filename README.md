@@ -8,7 +8,16 @@ A listings directory where users add info about **Hotels**, **Cars**, **Taxis** 
 - **Search** — case-insensitive across name, category, description, and location; category filter tabs + Clear button
 - **Top 5 Listings** — table sorted by rating, expandable rows to view details
 - **Confirmation modals** for deletes
+- **Login screen** — username/password sign-in, session-based auth; all API routes protected
 - White → light-blue gradient with a semi-transparent "MConnect" watermark
+
+## Credentials
+Default login (override via env vars `MCONNECT_USERNAME` / `MCONNECT_PASSWORD`):
+
+```
+username: admin
+password: admin123
+```
 
 ## Tech Stack
 - **Backend:** Python Flask + PostgreSQL (psycopg2)
@@ -88,6 +97,14 @@ DATABASE_URL="postgres://user:password@<PG_IP>:5432/outline" python3 app.py
 The app serves the API and frontend at `http://localhost:4000`.
 
 ## API Endpoints
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/login` | Login `{"username","password"}` → sets session |
+| `POST` | `/api/logout` | End session |
+| `GET` | `/api/me` | Current session status |
+
+All routes below require a valid session (set via `/api/login`):
 
 | Method | Route | Description |
 |---|---|---|

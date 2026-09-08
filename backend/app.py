@@ -4,10 +4,28 @@ import datetime
 import urllib.request
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, request, jsonify, send_from_directory
+from functools import wraps
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
+
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+app.secret_key = os.environ.get('SECRET_KEY', 'mconnect-dev-secret-change-me')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+MCONNECT_USERNAME = os.environ.get('MCONNECT_USERNAME', 'admin')
+MCONNECT_PASSWORD = os.environ.get('MCONNECT_PASSWORD', 'admin123')
+
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get('user'):
+            return jsonify({'error': 'Login required'}), 401
+        return f(*args, **kwargs)
+    return wrapper
+
 BUNDLED_JOKES = [
     "Why do programmers prefer dark mode? Because light attracts bugs.",
     "I told my wife she should embrace her mistakes. She hugged me.",
@@ -20,13 +38,18 @@ BUNDLED_JOKES = [
     "How do you organize a space party? You planet.",
     "Why do we tell actors to 'break a leg'? Because every play has a cast.",
 ]
+
 _joke_cache_date = None
 _joke_cache_value = None
+
+
 def get_daily_joke():
     global _joke_cache_date, _joke_cache_value
     today = datetime.date.today().isoformat()
+
     if _joke_cache_date == today:
         return _joke_cache_value
+
     joke = None
     try:
         req = urllib.request.Request(
@@ -38,20 +61,30 @@ def get_daily_joke():
             joke = data.get('joke') or None
     except Exception as e:
         print('Joke API unavailable:', e)
+
     if not joke:
         day_of_year = datetime.date.today().timetuple().tm_yday
         joke = BUNDLED_JOKES[day_of_year % len(BUNDLED_JOKES)]
+
     _joke_cache_date = today
     _joke_cache_value = joke
     return joke
+
+
 @app.after_request
 def no_cache(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     return response
+
+
 DB_URL = os.environ.get('DATABASE_URL', 'postgres://user:password@localhost:5432/outline')
+
+
 def get_db():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
+
+
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -81,6 +114,7 @@ def init_db():
         )
     ''')
     cur.execute('ALTER TABLE listings DROP CONSTRAINT IF EXISTS listings_category_check')
+
     cur.execute('SELECT COUNT(*) FROM categories')
     count = cur.fetchone()['count']
     if count == 0:
@@ -108,41 +142,80 @@ def init_db():
     cur.close()
     conn.close()
     print('Database initialized')
+
+
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
+
+
 @app.route('/api/health')
 def health():
     return jsonify({'status': 'ok'})
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    if username == MCONNECT_USERNAME and password == MCONNECT_PASSWORD:
+        session['user'] = username
+        return jsonify({'message': f'Welcome, {username}!', 'user': username})
+    return jsonify({'error': 'Invalid username or password'}), 401
+
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'message': 'Logged out'})
+
+
+@app.route('/api/me')
+def me():
+    return jsonify({'logged_in': bool(session.get('user')), 'user': session.get('user')})
+
+
 @app.route('/api/joke')
+@login_required
 def joke():
     return jsonify({
         'joke': get_daily_joke(),
         'date': datetime.date.today().isoformat(),
     })
+
+
 @app.route('/api/listings', methods=['GET'])
+@login_required
 def get_listings():
     conn = get_db()
     cur = conn.cursor()
     category = request.args.get('category')
     search = request.args.get('search')
+
     query = 'SELECT * FROM listings'
     conditions = []
     values = []
+
     if category:
         conditions.append(f'category = %s')
         values.append(category)
+
     if search:
         conditions.append('(name ILIKE %s OR description ILIKE %s OR location ILIKE %s OR category ILIKE %s)')
         val = f'%{search}%'
         values.extend([val, val, val, val])
+
     if conditions:
         query += ' WHERE ' + ' AND '.join(conditions)
+
     query += ' ORDER BY created_at DESC'
+
     cur.execute(query, values)
     rows = cur.fetchall()
     cur.close()
     conn.close()
+
     result = []
     for row in rows:
         row['id'] = row['id']
@@ -150,14 +223,20 @@ def get_listings():
         if row.get('fields') and isinstance(row['fields'], str):
             row['fields'] = json.loads(row['fields'])
         result.append(row)
+
     return jsonify(result)
+
+
 @app.route('/api/listings', methods=['POST'])
+@login_required
 def create_listing():
     data = request.get_json()
     category = data.get('category')
     name = data.get('name')
+
     if not category or not name:
         return jsonify({'error': 'Category and name are required'}), 400
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute('SELECT 1 FROM categories WHERE name = %s', (category,))
@@ -165,6 +244,7 @@ def create_listing():
         cur.close()
         conn.close()
         return jsonify({'error': f'Category "{category}" does not exist'}), 400
+
     cur.execute(
         '''INSERT INTO listings (category, name, description, price, location, image_url, fields)
            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING *''',
@@ -182,11 +262,16 @@ def create_listing():
     conn.commit()
     cur.close()
     conn.close()
+
     listing['created_at'] = listing['created_at'].isoformat() if listing['created_at'] else None
     if listing.get('fields') and isinstance(listing['fields'], str):
         listing['fields'] = json.loads(listing['fields'])
+
     return jsonify(listing), 201
+
+
 @app.route('/api/listings/top', methods=['GET'])
+@login_required
 def get_top_listings():
     conn = get_db()
     cur = conn.cursor()
@@ -195,14 +280,19 @@ def get_top_listings():
     rows = cur.fetchall()
     cur.close()
     conn.close()
+
     result = []
     for row in rows:
         row['created_at'] = row['created_at'].isoformat() if row['created_at'] else None
         if row.get('fields') and isinstance(row['fields'], str):
             row['fields'] = json.loads(row['fields'])
         result.append(row)
+
     return jsonify(result)
+
+
 @app.route('/api/listings/<int:id>/rate', methods=['POST'])
+@login_required
 def rate_listing(id):
     data = request.get_json() or {}
     try:
@@ -211,6 +301,7 @@ def rate_listing(id):
         return jsonify({'error': 'Rating must be a number'}), 400
     if value < 1 or value > 5:
         return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute('SELECT rating, rating_count FROM listings WHERE id = %s', (id,))
@@ -219,6 +310,7 @@ def rate_listing(id):
         cur.close()
         conn.close()
         return jsonify({'error': 'Listing not found'}), 404
+
     old = float(row['rating'] or 0)
     cnt = int(row['rating_count'] or 0)
     new_count = cnt + 1
@@ -229,8 +321,12 @@ def rate_listing(id):
     conn.commit()
     cur.close()
     conn.close()
+
     return jsonify({'rating': float(updated['rating']), 'rating_count': int(updated['rating_count'])})
+
+
 @app.route('/api/listings/<int:id>', methods=['GET'])
+@login_required
 def get_listing(id):
     conn = get_db()
     cur = conn.cursor()
@@ -238,18 +334,25 @@ def get_listing(id):
     listing = cur.fetchone()
     cur.close()
     conn.close()
+
     if not listing:
         return jsonify({'error': 'Listing not found'}), 404
+
     listing['created_at'] = listing['created_at'].isoformat() if listing['created_at'] else None
     if listing.get('fields') and isinstance(listing['fields'], str):
         listing['fields'] = json.loads(listing['fields'])
+
     return jsonify(listing)
+
+
 @app.route('/api/listings/<int:id>', methods=['PUT'])
+@login_required
 def update_listing(id):
     data = request.get_json() or {}
     name = data.get('name')
     if not name:
         return jsonify({'error': 'Name is required'}), 400
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
@@ -272,13 +375,19 @@ def update_listing(id):
     conn.commit()
     cur.close()
     conn.close()
+
     if not listing:
         return jsonify({'error': 'Listing not found'}), 404
+
     listing['created_at'] = listing['created_at'].isoformat() if listing['created_at'] else None
     if listing.get('fields') and isinstance(listing['fields'], str):
         listing['fields'] = json.loads(listing['fields'])
+
     return jsonify(listing)
+
+
 @app.route('/api/listings/<int:id>', methods=['DELETE'])
+@login_required
 def delete_listing(id):
     conn = get_db()
     cur = conn.cursor()
@@ -287,10 +396,15 @@ def delete_listing(id):
     conn.commit()
     cur.close()
     conn.close()
+
     if not listing:
         return jsonify({'error': 'Listing not found'}), 404
+
     return jsonify({'message': 'Listing deleted', 'listing': dict(listing)})
+
+
 @app.route('/api/categories', methods=['GET'])
+@login_required
 def get_categories():
     conn = get_db()
     cur = conn.cursor()
@@ -298,22 +412,29 @@ def get_categories():
     rows = cur.fetchall()
     cur.close()
     conn.close()
+
     result = []
     for row in rows:
         row['created_at'] = row['created_at'].isoformat() if row['created_at'] else None
         if row.get('fields') and isinstance(row['fields'], str):
             row['fields'] = json.loads(row['fields'])
         result.append(row)
+
     return jsonify(result)
+
+
 @app.route('/api/categories', methods=['POST'])
+@login_required
 def create_category():
     data = request.get_json()
     name = (data.get('name') or '').strip().lower().replace(' ', '_')
     fields = data.get('fields', [])
+
     if not name:
         return jsonify({'error': 'Category name is required'}), 400
     if len(name) > 50:
         return jsonify({'error': 'Category name too long'}), 400
+
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -328,11 +449,16 @@ def create_category():
         return jsonify({'error': 'Category already exists'}), 400
     cur.close()
     conn.close()
+
     category['created_at'] = category['created_at'].isoformat() if category['created_at'] else None
     if category.get('fields') and isinstance(category['fields'], str):
         category['fields'] = json.loads(category['fields'])
+
     return jsonify(category), 201
+
+
 @app.route('/api/categories/<string:name>', methods=['DELETE'])
+@login_required
 def delete_category(name):
     conn = get_db()
     cur = conn.cursor()
@@ -343,13 +469,17 @@ def delete_category(name):
     conn.commit()
     cur.close()
     conn.close()
+
     if not category:
         return jsonify({'error': 'Category not found'}), 404
+
     return jsonify({
         'message': f'Category deleted ({deleted_listings} listing(s) removed)',
         'category': dict(category),
         'listings_removed': deleted_listings,
     })
+
+
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=4000, debug=True)
