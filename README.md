@@ -1,31 +1,37 @@
-# Listings Directory App
+# MConnect — Listings Directory App
 
-A simple CRUD application for managing listings across three categories: **Hotels**, **Cars**, and **Taxis**. Features a search bar and category filtering.
+A listings directory where users add info about **Hotels**, **Cars**, **Taxis** (and any custom category) and search/filter it. Comes with ratings, a Top 5 table, and a daily-joke style banner.
+
+## Features
+- **Dynamic categories** — create categories with custom fields (text, number, phone, textarea, dropdown); tabs render automatically
+- **Listings CRUD** — add, edit, delete; per-category fields; star ratings (running average + vote count)
+- **Search** — case-insensitive across name, category, description, and location; category filter tabs + Clear button
+- **Top 5 Listings** — table sorted by rating, expandable rows to view details
+- **Confirmation modals** for deletes
+- White → light-blue gradient with a semi-transparent "MConnect" watermark
 
 ## Tech Stack
 - **Backend:** Python Flask + PostgreSQL (psycopg2)
 - **Frontend:** Vanilla HTML/CSS/JavaScript (served by Flask)
-- **Database:** PostgreSQL (running in Docker)
 
 ## Project Structure
 ```
 /backend/
-  app.py          # Flask app, API routes, DB init
-  schema.sql      # SQL schema (optional, DB auto-inits in app.py)
+  app.py          # Flask app, API routes, DB init (auto-creates tables + seeds defaults)
   requirements.txt
 /frontend/
   index.html      # Single-page app UI
 ```
 
-## Setup
+## Setup & Run
 
 ### 1. Install Python dependencies
 ```bash
 pip3 install --break-system-packages flask psycopg2-binary flask-cors
 ```
 
-### 2. Start PostgreSQL (Docker)
-Ensure the postgres container is running and reachable. Find its IP:
+### 2. Ensure PostgreSQL (Docker) is reachable
+The DB migrates/initializes itself on startup (creates `listings` + `categories` tables, seeds Hotel/Car/Taxi). Find the postgres container IP:
 ```bash
 docker inspect postgres --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
 ```
@@ -36,18 +42,20 @@ cd backend
 DATABASE_URL="postgres://user:password@<PG_IP>:5432/outline" python3 app.py
 ```
 
-The app serves both the API and frontend at `http://localhost:4000`.
+The app serves the API and frontend at `http://localhost:4000`.
 
 ## API Endpoints
 
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/api/listings` | List all (optional `?category=hotel\|car\|taxi&search=query`) |
+| `GET` | `/api/listings` | List (optional `?category=<name>&search=<query>`) |
 | `POST` | `/api/listings` | Create a listing |
 | `GET` | `/api/listings/:id` | Get one listing |
+| `PUT` | `/api/listings/:id` | Edit a listing |
 | `DELETE` | `/api/listings/:id` | Delete a listing |
-
-## Category-specific fields
-- **Hotel:** `stars` (1-5), `amenities` (list)
-- **Car:** `model`, `seats`, `year`
-- **Taxi:** `rate_per_km`, `area`, `phone`
+| `POST` | `/api/listings/:id/rate` | Rate a listing `{"value": 1-5}` |
+| `GET` | `/api/listings/top` | Top-N by rating (`?limit=5`) |
+| `GET` | `/api/categories` | List categories |
+| `POST` | `/api/categories` | Create a category with field definitions |
+| `DELETE` | `/api/categories/:name` | Delete a category (cascades its listings) |
+| `GET` | `/api/joke` | Daily joke (live API with bundled fallback) |
