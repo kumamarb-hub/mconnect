@@ -49,6 +49,17 @@ To change the DB password, edit `POSTGRES_PASSWORD` in `docker-compose.yml` (bot
 
 To deploy on a production server: install Docker on it, copy this folder, and run the same `docker compose up -d --build` command.
 
+### One-command production deploy
+
+Run on the server (e.g. the 10.14.0.42 prod host). Installs Docker if missing, clones/updates the code from GitHub, and starts the stack:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kumamarb-hub/mconnect/master/deploy.sh | bash
+# or: git clone https://github.com/kumamarb-hub/mconnect.git && cd mconnect && ./deploy.sh
+```
+
+The app is then live at `http://<server-ip>:4000`.
+
 ## Manual Setup (no Docker)
 
 ### 1. Install Python dependencies
