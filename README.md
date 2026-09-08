@@ -34,7 +34,7 @@ One command runs the whole app (Flask + PostgreSQL) with a persistent database:
 docker compose up -d --build
 ```
 
-- App → http://localhost:4000 (or https://10.14.0.42)
+- App → http://localhost:4000 (or http://<server-ip>:4000)
 - PostgreSQL runs in a private container (`db`), data persists in the `pgdata` volume (survives restarts/rebuilds)
 - The schema auto-creates and seeds default categories (hotel/car/taxi) on first start
 
