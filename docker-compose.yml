@@ -28,5 +28,13 @@ services:
       db:
         condition: service_healthy
 
+  nginx:
+    build: ./nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+
 volumes:
   pgdata:
