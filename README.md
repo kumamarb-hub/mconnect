@@ -54,8 +54,14 @@ To deploy on a production server: install Docker on it, copy this folder, and ru
 Run on the server (e.g. the 10.14.0.42 prod host). Installs Docker if missing, clones/updates the code from GitHub, and starts the stack:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kumamarb-hub/mconnect/master/deploy.sh | bash
-# or: git clone https://github.com/kumamarb-hub/mconnect.git && cd mconnect && ./deploy.sh
+# Clones the app and runs deploy.sh (no curl flags involved — avoids curlrc flag conflicts)
+git clone https://github.com/kumamarb-hub/mconnect.git
+cd mconnect
+./deploy.sh
+
+# or, download the script to a file first:
+curl -sSL https://raw.githubusercontent.com/kumamarb-hub/mconnect/master/deploy.sh -o deploy.sh
+bash deploy.sh
 ```
 
 The app is then live at `http://<server-ip>:4000`.
