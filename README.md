@@ -21,16 +21,42 @@ A listings directory where users add info about **Hotels**, **Cars**, **Taxis** 
   requirements.txt
 /frontend/
   index.html      # Single-page app UI
+Dockerfile        # Web container image
+docker-compose.yml  # web + db docker service stack
 ```
 
-## Setup & Run
+## 🐳 Deploy with Docker (recommended)
+
+One command runs the whole app (Flask + PostgreSQL) with a persistent database:
+
+```bash
+docker compose up -d --build
+```
+
+- App → http://localhost:4000
+- PostgreSQL runs in a private container (`db`), data persists in the `pgdata` volume (survives restarts/rebuilds)
+- The schema auto-creates and seeds default categories (hotel/car/taxi) on first start
+
+Useful commands:
+```bash
+docker compose logs -f web     # app logs
+docker compose down            # stop containers (data kept)
+docker compose down -v         # stop AND wipe the database
+docker compose up -d --build   # rebuild after code changes
+```
+
+To change the DB password, edit `POSTGRES_PASSWORD` in `docker-compose.yml` (both spots) and run `docker compose down -v && docker compose up -d` to re-create the volume.
+
+To deploy on a production server: install Docker on it, copy this folder, and run the same `docker compose up -d --build` command.
+
+## Manual Setup (no Docker)
 
 ### 1. Install Python dependencies
 ```bash
 pip3 install --break-system-packages flask psycopg2-binary flask-cors
 ```
 
-### 2. Ensure PostgreSQL (Docker) is reachable
+### 2. Ensure a PostgreSQL server is reachable
 The DB migrates/initializes itself on startup (creates `listings` + `categories` tables, seeds Hotel/Car/Taxi). Find the postgres container IP:
 ```bash
 docker inspect postgres --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'

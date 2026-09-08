@@ -1,0 +1,6 @@
+.git
+__pycache__
+*.pyc
+backend.log
+served.html
+.env

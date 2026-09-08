@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mconnect
+      POSTGRES_PASSWORD: mconnect_secret
+      POSTGRES_DB: mconnect
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mconnect -d mconnect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://mconnect:mconnect_secret@db:5432/mconnect
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
