@@ -3,7 +3,6 @@
 A listings directory where users add info about **Hotels**, **Cars**, **Taxis** (and any custom category) and search/filter it. Comes with ratings, a Top 5 table, and a daily-joke style banner.
 
 ## Features
-- **Login screen** — "Welcome to MConnect", username + password (session-based). Default `admin` / `admin123` — change it before public use
 - **Dynamic categories** — create categories with custom fields (text, number, phone, textarea, dropdown); tabs render automatically
 - **Listings CRUD** — add, edit, delete; per-category fields; star ratings (running average + vote count)
 - **Search** — case-insensitive across name, category, description, and location; category filter tabs + Clear button
@@ -37,17 +36,6 @@ docker compose up -d --build
 - App → http://localhost:4000 (or http://<server-ip>:4000)
 - PostgreSQL runs in a private container (`db`), data persists in the `pgdata` volume (survives restarts/rebuilds)
 - The schema auto-creates and seeds default categories (hotel/car/taxi) on first start
-
-### Credentials
-Default login is `admin` / `admin123`. To change it, create a `.env` file next to `docker-compose.yml`:
-
-```bash
-MCONNECT_USERNAME=you
-MCONNECT_PASSWORD=changeme
-SECRET_KEY=some-long-random-string   # used to sign login sessions
-```
-
-then `docker compose up -d --build`. The database keeps its data.
 
 Useful commands:
 ```bash
@@ -103,10 +91,7 @@ The app serves the API and frontend at `http://localhost:4000`.
 
 | Method | Route | Description |
 |---|---|---|
-| `POST` | `/api/login` | Login `{"username","password"}` → sets session |
-| `POST` | `/api/logout` | End session |
-| `GET` | `/api/me` | Current session status |
-| `GET` | `/api/listings` | List (optional `?category=<name>&search=<query>`) — requires login |
+| `GET` | `/api/listings` | List (optional `?category=<name>&search=<query>`) |
 | `POST` | `/api/listings` | Create a listing |
 | `GET` | `/api/listings/:id` | Get one listing |
 | `PUT` | `/api/listings/:id` | Edit a listing |

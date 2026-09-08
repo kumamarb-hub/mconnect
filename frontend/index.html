@@ -530,142 +530,14 @@
     color: #888;
     margin-top: 0.3rem;
   }
-
-  /* Login screen */
-  .login-screen {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-    backdrop-filter: blur(4px);
-  }
-
-  .login-screen.hidden { display: none; }
-
-  .login-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2.5rem 2.5rem 2rem;
-    width: 90%;
-    max-width: 380px;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-  }
-
-  .login-card .login-logo {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #667eea;
-    margin-bottom: 0.5rem;
-  }
-
-  .login-card .login-logo .spin {
-    display: inline-block;
-    font-size: 2.2rem;
-    margin-right: 0.3rem;
-    animation: slowSpin 6s linear infinite;
-  }
-
-  .login-card h2 { font-size: 1.5rem; margin-bottom: 0.3rem; }
-  .login-card .login-sub { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
-
-  .login-card label {
-    display: block;
-    text-align: left;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-top: 0.9rem;
-    margin-bottom: 0.3rem;
-    color: #555;
-  }
-
-  .login-card input {
-    width: 100%;
-    padding: 0.7rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 0.95rem;
-  }
-
-  .login-card input:focus { outline: none; border-color: #667eea; }
-
-  .login-error {
-    color: #dc3545;
-    font-size: 0.85rem;
-    margin-top: 0.7rem;
-    min-height: 1.1em;
-  }
-
-  .login-btn {
-    width: 100%;
-    margin-top: 1.2rem;
-    padding: 0.8rem;
-    border: none;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .login-btn:hover { filter: brightness(1.08); }
-
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1000px;
-    margin: 0 auto;
-    gap: 1rem;
-  }
-
-  .logout-btn {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 8px;
-    padding: 0.45rem 1rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .logout-btn:hover { background: rgba(255,255,255,0.28); }
-
-  #app.hidden { display: none; }
 </style>
 </head>
 <body>
 
-<!-- Login screen -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo"><span class="spin">🔄</span>M<span class="accent" style="color:#ffd966">Connect</span></div>
-    <h2>Welcome to MConnect</h2>
-    <p class="login-sub">Please sign in to continue</p>
-    <form onsubmit="login(event)">
-      <label for="loginUser">Username</label>
-      <input type="text" id="loginUser" autocomplete="username" required>
-      <label for="loginPass">Password</label>
-      <input type="password" id="loginPass" autocomplete="current-password" required>
-      <div class="login-error" id="loginError"></div>
-      <button type="submit" class="login-btn">Login</button>
-    </form>
-  </div>
-</div>
-
 <div class="bg-watermark">MConnect</div>
 
-<div id="app">
 <header>
-  <div class="header-top">
-    <h1 class="logo"><span class="spin">🔄</span>M<span class="accent">Connect</span></h1>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-  </div>
+  <h1 class="logo"><span class="spin">🔄</span>M<span class="accent">Connect</span></h1>
 </header>
 
 <div class="search-container">
@@ -706,7 +578,6 @@
   <button class="add-btn" type="button" onclick="openModal()">+ Add Listing</button>
   <div class="listings-grid" id="listings"></div>
 </div>
-</div><!-- /#app -->
 
 <!-- Add Listing modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -791,81 +662,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') doSearch();
   });
-  checkAuth();
+  loadCategories();
+  loadTopListings();
 });
-
-async function checkAuth() {
-  try {
-    const res = await fetch('/api/me');
-    const data = await res.json();
-    if (data.logged_in) {
-      hideLogin();
-      loadCategories();
-      loadTopListings();
-    } else {
-      showLogin();
-    }
-  } catch (err) {
-    showLogin();
-  }
-}
-
-function showLogin() {
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('app').classList.add('hidden');
-}
-
-function hideLogin() {
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  const err = document.getElementById('loginError');
-  if (err) err.textContent = '';
-  document.getElementById('loginPass').value = '';
-}
-
-async function login(e) {
-  e.preventDefault();
-  const username = document.getElementById('loginUser').value.trim();
-  const password = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginError');
-  errEl.textContent = '';
-
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    if (res.ok) {
-      hideLogin();
-      await loadCategories();
-      loadTopListings();
-    } else {
-      const err = await res.json();
-      errEl.textContent = err.error || 'Invalid username or password';
-    }
-  } catch (err) {
-    errEl.textContent = 'Network error';
-  }
-}
-
-async function logout() {
-  try { await fetch('/api/logout', { method: 'POST' }); } catch (e) {}
-  showLogin();
-}
-
-async function authenticatedFetch(url, options) {
-  const res = await fetch(url, options);
-  if (res.status === 401) {
-    showLogin();
-    throw new Error('Login required');
-  }
-  return res;
-}
 
 async function loadTopListings() {
   try {
-    const res = await authenticatedFetch('/api/listings/top?limit=5');
+    const res = await fetch('/api/listings/top?limit=5');
     const listings = await res.json();
     renderTopListings(listings);
   } catch (err) {
@@ -944,7 +747,7 @@ function slugify(name) {
 
 async function loadCategories() {
   try {
-    const res = await authenticatedFetch(CATEGORIES_API);
+    const res = await fetch(CATEGORIES_API);
     categories = await res.json();
     renderTabs();
     populateCategorySelect();
@@ -987,7 +790,7 @@ async function loadListings() {
   if (currentSearch) params.set('search', currentSearch);
 
   try {
-    const res = await authenticatedFetch(`${API}?${params}`);
+    const res = await fetch(`${API}?${params}`);
     const listings = await res.json();
     allListings = listings;
     renderListings(listings);
@@ -1175,7 +978,7 @@ async function submitForm(e) {
   try {
     const url = editingId ? `${API}/${editingId}` : API;
     const method = editingId ? 'PUT' : 'POST';
-    const res = await authenticatedFetch(url, {
+    const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -1279,7 +1082,7 @@ async function submitCategory(e) {
   });
 
   try {
-    const res = await authenticatedFetch(CATEGORIES_API, {
+    const res = await fetch(CATEGORIES_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, fields })
@@ -1301,7 +1104,7 @@ function deleteCategory(name) {
   const display = humanize(name);
   showConfirm(`Are you sure you want to delete category "${display}" and all its listings?`, async () => {
     try {
-      const res = await authenticatedFetch(`${CATEGORIES_API}/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      const res = await fetch(`${CATEGORIES_API}/${encodeURIComponent(name)}`, { method: 'DELETE' });
 
       if (res.ok) {
         if (currentCategory === name) clearSearch();
@@ -1319,7 +1122,7 @@ function deleteCategory(name) {
 
 async function rateListing(id, value) {
   try {
-    const res = await authenticatedFetch(`${API}/${id}/rate`, {
+    const res = await fetch(`${API}/${id}/rate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value })
@@ -1336,7 +1139,7 @@ async function rateListing(id, value) {
 function deleteListing(id) {
   showConfirm('Are you sure you want to delete this listing?', async () => {
     try {
-      await authenticatedFetch(`${API}/${id}`, { method: 'DELETE' });
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
       loadListings();
       loadTopListings();
     } catch (err) {
