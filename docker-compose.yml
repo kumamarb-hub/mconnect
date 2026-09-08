@@ -25,5 +25,19 @@ services:
       db:
         condition: service_healthy
 
+  https:
+    build: ./https
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HTTPS_HOST: 10.14.0.42
+    volumes:
+      - certs:/certs
+
 volumes:
   pgdata:
+  certs:
